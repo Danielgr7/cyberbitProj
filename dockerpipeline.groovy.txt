@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    environment {
+        GIT_USERNAME = credentials('Danielgr7')
+        GIT_PASSWORD = credentials('Danielgr7')
+        dockerImage = ''
+    }
+    
+    stages {
+        stage('Checkout SCM') {
+                steps {
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: 'main']],
+                        userRemoteConfigs: [[url: 'https://github.com/Danielgr7/cyberbitProj.git']]])
+                }
+            }
+        stage('Build Image') {
+                steps {
+                   script{
+                       dockerImage = docker.build "zip-job-docker"
+                   }
+                }
+            }
+        stage('Run container') {
+                    steps{
+                        script{
+                            dockerImage.inside{
+                                 sh 'python3 /tmp/zip_job.py'
+                                sh 'ls -lrt /tmp/'
+                            }
+                        }
+                    }
+                }
+        
+        
+        stage('Cleanup') {
+            steps {
+                deleteDir()
+            }
+        }
+    }
+}
